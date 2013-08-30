@@ -26,7 +26,12 @@ IMPL_CFLAGS = -std=c99 -D_XOPEN_SOURCE=600 \
 		-Wno-long-long \
 		-Wno-unused-but-set-variable
 		
-CFLAGS = ${IMPL_CFLAGS}
+
+# original flag
+# CFLAGS = ${IMPL_CFLAGS}
+# for mac
+CFLAGS += -g -I${TLPI_INCL_DIR}
+
 
 IMPL_THREAD_FLAGS = -pthread
 
