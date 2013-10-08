@@ -40,6 +40,8 @@ main(int argc, char *argv[])
     svaddr.sin6_addr = in6addr_any;                     /* Wildcard address */
     svaddr.sin6_port = htons(PORT_NUM);
 
+    /* hong: can it bind to any address regardless of ipv4 or ipv6? */
+    /* hong: how to know ipv6 is enabled on mac ? */
     if (bind(sfd, (struct sockaddr *) &svaddr,
                 sizeof(struct sockaddr_in6)) == -1)
         errExit("bind");
