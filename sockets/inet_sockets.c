@@ -43,8 +43,10 @@ inetConnect(const char *host, const char *service, int type)
     struct addrinfo *result, *rp;
     int sfd, s;
 
+    /* hong: set fields of hints to 0 or NULL */
     memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_canonname = NULL;
+    /* hong: make pointer be NULL, not simply 0 in case NULL is not defined as 0 */
+    hints.ai_canonname = NULL; 
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
     hints.ai_family = AF_UNSPEC;        /* Allows IPv4 or IPv6 */

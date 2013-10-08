@@ -27,7 +27,7 @@ main(int argc, char *argv[])
     ssize_t numBytes;
     socklen_t len;
     char buf[BUF_SIZE];
-    char claddrStr[INET6_ADDRSTRLEN];
+    char claddrStr[INET6_ADDRSTRLEN];/* hong: max ipv6 string len */
 
     /* Create a datagram socket bound to an address in the IPv6 domain */
 
@@ -35,13 +35,16 @@ main(int argc, char *argv[])
     if (sfd == -1)
         errExit("socket");
 
+    /* hong: clear it with 0 first */
     memset(&svaddr, 0, sizeof(struct sockaddr_in6));
     svaddr.sin6_family = AF_INET6;
     svaddr.sin6_addr = in6addr_any;                     /* Wildcard address */
-    svaddr.sin6_port = htons(PORT_NUM);
+    svaddr.sin6_port = htons(PORT_NUM); /* hong: htons() */
 
-    /* hong: can it bind to any address regardless of ipv4 or ipv6? */
     /* hong: how to know ipv6 is enabled on mac ? */
+    /* hong: svaddr is of type 'struct sockaddr_in6', convert it to
+     * 'struct sockaddr *)
+     */
     if (bind(sfd, (struct sockaddr *) &svaddr,
                 sizeof(struct sockaddr_in6)) == -1)
         errExit("bind");
@@ -63,9 +66,10 @@ main(int argc, char *argv[])
         else
             printf("Server received %ld bytes from (%s, %u)\n",
                     (long) numBytes, claddrStr, ntohs(claddr.sin6_port));
+        /* hong: ntohs() */
 
         for (j = 0; j < numBytes; j++)
-            buf[j] = toupper((unsigned char) buf[j]);
+            buf[j] = toupper((unsigned char) buf[j]); /* hong: include <ctype.h> */
 
         if (sendto(sfd, buf, numBytes, 0, (struct sockaddr *) &claddr, len) !=
                 numBytes)

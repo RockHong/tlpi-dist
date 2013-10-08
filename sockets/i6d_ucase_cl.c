@@ -37,14 +37,43 @@ main(int argc, char *argv[])
 
     memset(&svaddr, 0, sizeof(struct sockaddr_in6));
     svaddr.sin6_family = AF_INET6;
+    /* hong: convert port num into network byte order.
+     * h: host; n: network; s: 'short', uint16_t;
+     * why needed?
+     * because you pass a remote machine the port num and tell it
+     * i want to call that service.
+     * so you must store the port num in network order and pass it
+     */
     svaddr.sin6_port = htons(PORT_NUM);
+    /* hong: argv[1] must be ipv6 presentation because the 1st argu of 
+     * inet_pton() is set to AF_INET6..
+     * for example, the ::1 is ipv6 version of loopback address.
+     * inet_pton() doesn't support host name like 'localhost'.
+     * if you want to get address from host name, use getaddrinfo() instead.
+     * inet_pton() supports:
+     * 204.152.189.116 (IPv4 dotted-decimal address);
+     * ::1 (an IPv6 colon-separated hexadecimal address); or
+     * ::FFFF:204.152.189.116 (an IPv4-mapped IPv6 address)
+     */
     if (inet_pton(AF_INET6, argv[1], &svaddr.sin6_addr) <= 0)
         fatal("inet_pton failed for address '%s'", argv[1]);
 
     /* Send messages to server; echo responses on stdout */
 
+    /* hong: it's not necessary to call connect() before sendto().
+     * but it can call connect() if you want. 56.6.2
+     * after call connect() to connect to the peer socket in remote,
+     * - you can use write(), send()
+     * - on the socket fd, you can ONLY receive message from the connected
+     *   peer socket
+     */
     for (j = 2; j < argc; j++) {
         msgLen = strlen(argv[j]);
+        /* hong: 1st argu: the socket fd who sends the message
+         * 4th argu: possible value other than 0 see 61.3
+         * 5th argu: type of this argu is 'struct sockaddr *'
+         * the type of svaddr is sockaddr_in6, so cast it
+         */
         if (sendto(sfd, argv[j], msgLen, 0, (struct sockaddr *) &svaddr,
                     sizeof(struct sockaddr_in6)) != msgLen)
             fatal("sendto");
