@@ -34,9 +34,16 @@
 static void             /* SIGCHLD handler to reap dead child processes */
 grimReaper(int sig)
 {
+/* hong: why save errno? see 26.3.1
+ */
     int savedErrno;             /* Save 'errno' in case changed here */
 
     savedErrno = errno;
+/* hong: 1st argu: -1, wait for any child
+ * 2nd argu: NULL, we don't care the exit status of child
+ * 3rd argu: 26.1.2 , if no child specified by 1st argu has changed state,
+ * then return immediately
+ */
     while (waitpid(-1, NULL, WNOHANG) > 0)
         continue;
     errno = savedErrno;
@@ -75,6 +82,7 @@ main(int argc, char *argv[])
     /* Establish SIGCHLD handler to reap terminated child processes */
 
     sigemptyset(&sa.sa_mask);
+/* hong: SA_RESTART, restart system call after signal interrupt. 21.5 */
     sa.sa_flags = SA_RESTART;
     sa.sa_handler = grimReaper;
     if (sigaction(SIGCHLD, &sa, NULL) == -1) {
@@ -89,8 +97,14 @@ main(int argc, char *argv[])
     }
 
     for (;;) {
+	/* hong: 2nd, 3rd argu: we don't care about the peer socket address,
+         * so pass NULL for both
+         */  
         cfd = accept(lfd, NULL, NULL);  /* Wait for connection */
         if (cfd == -1) {
+	/* hong: it's a daemon, it has no terminal. so use syslog to record
+         * error message. 35.7
+         */  
             syslog(LOG_ERR, "Failure in accept(): %s", strerror(errno));
             exit(EXIT_FAILURE);
         }
@@ -106,6 +120,7 @@ main(int argc, char *argv[])
         case 0:                         /* Child */
             close(lfd);                 /* Unneeded copy of listening socket */
             handleRequest(cfd);
+/* hong: child process calls _exit() to exit. it has something about stdio buf.*/
             _exit(EXIT_SUCCESS);
 
         default:                        /* Parent */

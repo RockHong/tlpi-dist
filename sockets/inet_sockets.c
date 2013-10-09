@@ -101,8 +101,13 @@ inetPassiveSocket(const char *service, int type, socklen_t *addrlen,
     hints.ai_next = NULL;
     hints.ai_socktype = type;
     hints.ai_family = AF_UNSPEC;        /* Allows IPv4 or IPv6 */
+/* hong: p1216
+ * wildcard IP address: p1187, usually 0.0.0.0. use it, we can listen to all ip
+ * of a machine( a machine may have many network device)
+ */
     hints.ai_flags = AI_PASSIVE;        /* Use wildcard IP address */
 
+/* hong: 1st argu: should be NULL, if AI_PASSIVE is set. */
     s = getaddrinfo(NULL, service, &hints, &result);
     if (s != 0)
         return -1;
@@ -117,14 +122,23 @@ inetPassiveSocket(const char *service, int type, socklen_t *addrlen,
             continue;                   /* On error, try next address */
 
         if (doListen) {
+/* hong: p1278, 
+ * 2nd argu:
+ * 3rd argu: 61.10, for most server, we should turn on this option for socket
+ * 4th argu: optval = 1, so we turn on the SO_REUSEADDR option
+ */
             if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &optval,
                     sizeof(optval)) == -1) {
                 close(sfd);
+/* hong: remember to free the memory used by the return value of getaddrinfo */
                 freeaddrinfo(result);
                 return -1;
             }
         }
 
+/* hong: no matter tcp or udp, we must use bind to make connection between
+ * socket fd and ip adrees & port
+ */
         if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
             break;                      /* Success */
 
