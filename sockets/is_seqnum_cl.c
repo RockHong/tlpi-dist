@@ -26,6 +26,11 @@ main(int argc, char *argv[])
     char *reqLenStr;                    /* Requested length of sequence */
     char seqNumStr[INT_LEN];            /* Start of granted sequence */
     int cfd;
+/* hong: ssize_t, is a signed int or long. why need a 'signed size_t'?
+ * say a function returns size of reading operation, or -1 if fails. in this
+ * case, this function can use ssize_t as return type.
+ * http://stackoverflow.com/questions/15739490/should-use-size-t-or-ssize-t
+ */
     ssize_t numRead;
     struct addrinfo hints;
     struct addrinfo *result, *rp;
@@ -37,13 +42,18 @@ main(int argc, char *argv[])
        we can try connecting to */
 
     memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_canonname = NULL;
+    hints.ai_canonname = NULL; /* hong: for pointers, if not used, assign NULL*/
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
     hints.ai_family = AF_UNSPEC;                /* Allows IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM;
+/* hong: AI_NUMERICSERV prevent name-resolution for service, p1216
+ * because here port num is PORT_NUM("50000"), not name like "ssh/echo",
+ * we use this flag to prevent resolution.
+ */
     hints.ai_flags = AI_NUMERICSERV;
 
+/* hong: for host name, we can pass something like 'localhost' or '127.0.0.1' */
     if (getaddrinfo(argv[1], PORT_NUM, &hints, &result) != 0)
         errExit("getaddrinfo");
 
