@@ -68,8 +68,16 @@ main(int argc, char *argv[])
             numRead = read(sfd, buf, BUF_SIZE);
             if (numRead <= 0)                   /* Exit on EOF or error */
                 break;
+/* hong: %.*s, ".*" means "The precision is not specified in the format string,
+ * but as an additional integer value argument preceding the argument that 
+ * has to be formatted."
+ * http://www.cplusplus.com/reference/cstdio/printf/
+ */
             printf("%.*s", (int) numRead, buf);
         }
+/* hong: it's ok to not use _exit(). because no stdio call before fork().
+ * double check
+ */
         exit(EXIT_SUCCESS);
 
     default:            /* Parent: write contents of stdin to socket */
@@ -83,6 +91,10 @@ main(int argc, char *argv[])
 
         /* Close writing channel, so server sees EOF */
 
+/* hong: shutdown(), 61.2
+ * close write-end, the client can still read from the server, and the
+ * server can still send msg to the client.
+ */
         if (shutdown(sfd, SHUT_WR) == -1)
             errExit("shutdown");
         exit(EXIT_SUCCESS);

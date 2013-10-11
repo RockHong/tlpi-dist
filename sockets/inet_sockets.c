@@ -66,6 +66,11 @@ inetConnect(const char *host, const char *service, int type)
         if (sfd == -1)
             continue;                   /* On error, try next address */
 
+/* hong: udp can also use connect(), 56.6.2
+ * after call connect(), a udp socket can
+ * - use write(), read()
+ * - only receive msg sent by peer socket specified in connect()
+ */
         if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
             break;                      /* Success */
 

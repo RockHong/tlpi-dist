@@ -21,6 +21,7 @@
 /* Read 'n' bytes from 'fd' into 'buf', restarting after partial
    reads or interruptions by a signal handlers */
 
+/* hong: try best to read n, it maybe still partially read.*/
 ssize_t
 readn(int fd, void *buffer, size_t n)
 {
@@ -32,9 +33,18 @@ readn(int fd, void *buffer, size_t n)
     for (totRead = 0; totRead < n; ) {
         numRead = read(fd, buf, n - totRead);
 
+/* hong: p79, read(), if return 0, mean EOF. */
         if (numRead == 0)               /* EOF */
             return totRead;             /* May be 0 if this is first read() */
         if (numRead == -1) {
+/* hong: if interrupted by signal, then continue loop.
+ * actually, when set up signal hanlder, we can use SA_RESTART. 21.5
+ * if the option is set, the read will restart if it's partially done and interrupted
+ * by the signal.
+ * i'm not sure if SA_RESTART is an option which turns on be default or not.
+ * and, maybe it's not convenient & possible to set this option for every signal.
+ * so we can't rely on SA_RESTART.
+ */
             if (errno == EINTR)
                 continue;               /* Interrupted --> restart read() */
             else
